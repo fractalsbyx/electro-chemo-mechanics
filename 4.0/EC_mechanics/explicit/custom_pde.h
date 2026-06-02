@@ -39,7 +39,6 @@ public:
     , RT(get_user_inputs().user_constants.get_double("RT"))
     , F(get_user_inputs().user_constants.get_double("F"))
     , stiffness(get_user_inputs().user_constants.get_elasticity_tensor("stiffness"))
-
   {}
 
 private:
@@ -53,9 +52,9 @@ private:
     const dealii::Tensor<1, dim> &mesh_size =
       get_user_inputs().spatial_discretization.rectangular_mesh.size;
     dealii::Point<dim> center(mesh_size / 2.0);
-    double             rad = 10.0;
-    double             sdf = (rad * rad - (point - center).norm_square()) / (2.0 * rad);
-    double             domain_parameter = 0.5 * (1.0 + std::tanh(sdf)) + offset;
+    double             rad  = 10.0;
+    double             sdf  = ((point - center).norm_square() - rad * rad) / (2.0 * rad);
+    double domain_parameter = 0.5 * ((1.0 + offset) - (1.0 - offset) * std::tanh(sdf));
     if (index == 2) // c
       {
         scalar_value = c0 * domain_parameter;
@@ -112,14 +111,14 @@ private:
         ScalarValue app_pot_energy = F * del_phi;
         ScalarValue mech_energy    = site_vol * s;
         ScalarValue conf_energy    = RT * std::log(c / c_ref);
-        ScalarValue eta            = app_pot_energy + mech_energy +
+        ScalarValue eta = app_pot_energy + mech_energy +
                           conf_energy; // overpotential term, check conf_energy later
         ScalarValue BV_exp_term = exp(-eta / (RT));
-        ScalarValue c_term3     = (psi_x_mag / psi) * i_0 / F *
-                              (pow(BV_exp_term, alpha) -
-                               pow(BV_exp_term, -alpha)); // Full BV reaction rate term
-        ScalarGrad cx_term1 = -diffusivity * cx;
-        ScalarGrad cx_term2 = diffusivity * (site_vol * c) / RT * sx;
+        ScalarValue c_term3  = (psi_x_mag / psi) * i_0 / F *
+                               (pow(BV_exp_term, alpha) -
+                                pow(BV_exp_term, -alpha)); // Full BV reaction rate term
+        ScalarGrad  cx_term1 = -diffusivity * cx;
+        ScalarGrad  cx_term2 = diffusivity * (site_vol * c) / RT * sx;
 
         ScalarValue eq_c  = c + dt * (c_term1 + c_term2 + c_term3);
         ScalarGrad  eqx_c = dt * (cx_term1 + cx_term2);

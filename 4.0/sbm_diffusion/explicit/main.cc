@@ -22,23 +22,32 @@ main(int argc, char *argv[])
   constexpr unsigned int dim    = 2; // TODO change to 3 (original app)
   constexpr unsigned int degree = 2; // TODO change to 1 (original app)
 
-  std::vector<FieldAttributes> fields = {FieldAttributes("c"), FieldAttributes("f_tot")};
+  std::vector<FieldAttributes> fields = {FieldAttributes("c"),
+                                         FieldAttributes("psi"),
+                                         FieldAttributes("particle_concentration")};
+
+  SolveBlock constant_block;
+  constant_block.id            = -1;
+  constant_block.solve_type    = Constant;
+  constant_block.solve_timing  = Initialized;
+  constant_block.field_indices = {1};
 
   SolveBlock c_block;
-  c_block.id               = 0;
-  c_block.solve_type       = Explicit;
-  c_block.solve_timing     = Initialized;
-  c_block.field_indices    = {0};
-  c_block.dependencies_rhs = make_dependency_set(fields, {"old_1(c)", "grad(old_1(c))"});
+  c_block.id            = 0;
+  c_block.solve_type    = Explicit;
+  c_block.solve_timing  = Initialized;
+  c_block.field_indices = {0};
+  c_block.dependencies_rhs =
+    make_dependency_set(fields, {"old_1(c)", "grad(old_1(c))", "psi", "grad(psi)"});
 
   SolveBlock pp_block;
   pp_block.id               = 1;
   pp_block.solve_type       = Explicit;
   pp_block.solve_timing     = PostProcess;
-  pp_block.field_indices    = {1};
-  pp_block.dependencies_rhs = make_dependency_set(fields, {"c", "grad(c)"});
+  pp_block.field_indices    = {2};
+  pp_block.dependencies_rhs = make_dependency_set(fields, {"c", "psi"});
 
-  std::vector<SolveBlock> solve_blocks({c_block, pp_block});
+  std::vector<SolveBlock> solve_blocks({constant_block, c_block, pp_block});
 
   UserInputParameters<dim>       user_inputs(parameters_filename);
   PhaseFieldTools<dim>           pf_tools;
