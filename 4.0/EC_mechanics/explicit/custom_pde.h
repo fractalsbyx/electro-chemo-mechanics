@@ -41,6 +41,22 @@ public:
     , stiffness(get_user_inputs().user_constants.get_elasticity_tensor("stiffness"))
   {}
 
+  /*
+    void
+    post_solve_block([[maybe_unused]] SolveContext<dim, degree, number> &solve_context,
+                     [[maybe_unused]] unsigned int                       solver_id)
+    override
+    {
+      if (solver_id == 0)
+        {
+          if (user_inputs.spatial_discretization.has_adaptivity && increment == 0)
+            {
+              grid_refiner.do_initial_refinement(solvers);
+            }
+        }
+    }
+  */
+
 private:
   void
   set_initial_condition([[maybe_unused]] const unsigned int       &index,
@@ -128,10 +144,18 @@ private:
       }
     if (solve_block_id == 0) // u, s
       {
+        /*
+        if (sim_timer.get_increment() == 0.0)
+          {
+            VectorGrad stress;
+            variable_list.set_gradient_term(0, stress);
+            variable_list.set_value_term(1, 0.0);
+          }
+        */
         ScalarValue c   = variable_list.template get_value<Scalar, Current>(2);
         ScalarValue psi = variable_list.template get_value<Scalar, Current>(3);
         VectorGrad  transformation_strain;
-        ScalarValue eigenstrain = vegard * (c - c_ref);
+        ScalarValue eigenstrain = (vegard / 3.0) * (c - c_ref);
 
         for (unsigned int i = 0; i < dim; i++)
           {
@@ -160,6 +184,16 @@ private:
   {
     if (solve_block_id == 0) // mechanics - lhs
       {
+        /*
+          if (sim_timer.get_increment() == 0.0)
+            {
+              VectorGrad stress;
+              variable_list.set_gradient_term(0, stress);
+              variable_list.set_value_term(1, 0.0);
+              return;
+            }
+          */
+
         VectorGrad  ux  = variable_list.template get_symmetric_gradient<Vector, LHS>(0);
         ScalarValue s   = variable_list.template get_value<Scalar, LHS>(1);
         ScalarValue psi = variable_list.template get_value<Scalar, Current>(3);

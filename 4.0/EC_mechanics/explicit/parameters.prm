@@ -16,19 +16,20 @@ subsection refinement criterion: 0
   set value upper bound = 2
 end
 
-set time step = 2.5e-5
-set number steps = 1000
+set time step = 2.5e-2
+set number steps = 100000
 
 subsection output
   set condition = EQUAL_SPACING
   set number = 100
-  set list = 1,2,3,4,5,6,7,8,9,10, 47, 48,49
+  #set list = 1,2,3,4,5,6,7,8,9,10
   set file type = vtu
 end
 
 subsection linear solver parameters: 0
   set solver_ids               = 0
 
+  set solver type              = bicgstab
   set max iterations           = 10000
   set tolerance type           = RMSEPerField
   set tolerance value          = 1e-6
@@ -51,13 +52,13 @@ set Model constant c_ref = 0.1, DOUBLE
 set Model constant diffusivity = 0.1, DOUBLE
 
 set Model constant i_0 = 10.0, DOUBLE
-set Model constant del_phi = 0.50, DOUBLE
+set Model constant del_phi = 0.00, DOUBLE
 set Model constant alpha = 0.5, DOUBLE
 
 #Mechanics Parameters
-set Model constant vegard = 0.01, DOUBLE
-set Model constant site_vol = 1e-11, DOUBLE
-#set Model constant site_vol = 0.0, DOUBLE
+set Model constant vegard = 0.001, DOUBLE
+#set Model constant site_vol = 1e-11, DOUBLE
+set Model constant site_vol = 0.0, DOUBLE
 set Model constant poisson = 0.3, DOUBLE
 set Model constant youngs_modulus = 22.5, DOUBLE
 set Model constant stiffness = (22.5,0.3), isotropic elastic constants

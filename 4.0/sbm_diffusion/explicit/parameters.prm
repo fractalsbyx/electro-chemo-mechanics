@@ -6,7 +6,7 @@ end
 
 set global refinement = 7
 
-set time step = 2.0e-4
+set time step = 1.0e-2
 set number steps = 100000
 
 subsection output
@@ -18,4 +18,5 @@ end
 set Model constant c0 = 1.0, DOUBLE
 set Model constant c_ref = 0.1, DOUBLE
 set Model constant diffusivity = 0.1, DOUBLE
-set Model constant offset = 1e-6, DOUBLE
+set Model constant offset = 1e-2, DOUBLE
+set Model constant width = 2.0, DOUBLE

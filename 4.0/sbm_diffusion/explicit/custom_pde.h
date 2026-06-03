@@ -3,8 +3,6 @@
 
 #include <prismspf/core/pde_operator_base.h>
 
-#include <random>
-
 PRISMS_PF_BEGIN_NAMESPACE
 
 template <unsigned int dim, unsigned int degree, typename number>
@@ -29,6 +27,7 @@ public:
     , c_ref(get_user_inputs().user_constants.get_double("c_ref"))
     , diffusivity(get_user_inputs().user_constants.get_double("diffusivity"))
     , offset(get_user_inputs().user_constants.get_double("offset"))
+    , width(get_user_inputs().user_constants.get_double("width"))
   {}
 
 private:
@@ -95,7 +94,7 @@ private:
   number c_ref;
   number offset;
   number diffusivity;
-  // mutable std::uniform_real_distribution<number> dist;
+  number width;
 };
 
 PRISMS_PF_END_NAMESPACE
