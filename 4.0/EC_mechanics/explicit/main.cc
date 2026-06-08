@@ -26,7 +26,9 @@ main(int argc, char *argv[])
                                          FieldAttributes("s"),
                                          FieldAttributes("c"),
                                          FieldAttributes("psi"),
-                                         FieldAttributes("particle_concentration")};
+                                         FieldAttributes("particle_concentration"),
+                                         FieldAttributes("conf_energy"),
+                                         FieldAttributes("mech_energy")};
 
   SolveBlock constant_block;
   constant_block.id            = -1;
@@ -56,8 +58,8 @@ main(int argc, char *argv[])
   pp_block.id               = 2;
   pp_block.solve_type       = Explicit;
   pp_block.solve_timing     = PostProcess;
-  pp_block.field_indices    = {4};
-  pp_block.dependencies_rhs = make_dependency_set(fields, {"c", "psi"});
+  pp_block.field_indices    = {4, 5, 6};
+  pp_block.dependencies_rhs = make_dependency_set(fields, {"grad(u)", "c", "psi"});
 
   std::vector<SolveBlock> solve_blocks({constant_block, c_block, u_block, pp_block});
 
@@ -65,10 +67,10 @@ main(int argc, char *argv[])
   PhaseFieldTools<dim>           pf_tools;
   CustomPDE<dim, degree, double> pde_operator(user_inputs, pf_tools);
   Problem<dim, degree, double>   problem(fields,
-                                       solve_blocks,
-                                       user_inputs,
-                                       pf_tools,
-                                       pde_operator);
+                                         solve_blocks,
+                                         user_inputs,
+                                         pf_tools,
+                                         pde_operator);
   problem.solve();
 
   return 0;

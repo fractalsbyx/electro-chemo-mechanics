@@ -34,8 +34,9 @@ public:
     , alpha(get_user_inputs().user_constants.get_double("alpha"))
     , vegard(get_user_inputs().user_constants.get_double("vegard"))
     , site_vol(get_user_inputs().user_constants.get_double("site_vol"))
-    , poisson(get_user_inputs().user_constants.get_double("poisson"))
-    , youngs_modulus(get_user_inputs().user_constants.get_double("youngs_modulus"))
+    , mol_vol(get_user_inputs().user_constants.get_double("mol_vol"))
+    //, poisson(get_user_inputs().user_constants.get_double("poisson"))
+    //, youngs_modulus(get_user_inputs().user_constants.get_double("youngs_modulus"))
     , RT(get_user_inputs().user_constants.get_double("RT"))
     , F(get_user_inputs().user_constants.get_double("F"))
     , stiffness(get_user_inputs().user_constants.get_elasticity_tensor("stiffness"))
@@ -144,14 +145,6 @@ private:
       }
     if (solve_block_id == 0) // u, s
       {
-        /*
-        if (sim_timer.get_increment() == 0.0)
-          {
-            VectorGrad stress;
-            variable_list.set_gradient_term(0, stress);
-            variable_list.set_value_term(1, 0.0);
-          }
-        */
         ScalarValue c   = variable_list.template get_value<Scalar, Current>(2);
         ScalarValue psi = variable_list.template get_value<Scalar, Current>(3);
         VectorGrad  transformation_strain;
@@ -171,9 +164,34 @@ private:
       }
     else if (solve_block_id == 2) // pp
       {
-        ScalarValue c   = variable_list.template get_value<Scalar, Current>(2);
+        // Calling Variables
+        VectorGrad ux = variable_list.template get_symmetric_gradient<Vector, Current>(0);
+        ScalarValue c = variable_list.template get_value<Scalar, Current>(2);
         ScalarValue psi = variable_list.template get_value<Scalar, Current>(3);
+
+        // Concentration inside the particle
         variable_list.set_value_term(4, c * psi);
+
+        // Solution Free Energy (J/vol)
+        ScalarValue conf_energy =
+          (RT * c * std::log(c)) / mol_vol; // check mol_vol vs site_vol
+        variable_list.set_value_term(5, psi * conf_energy);
+
+        // Mechanical Free Energy (J/vol)
+        VectorGrad  transformation_strain;
+        ScalarValue eigenstrain = (vegard / 3.0) * (c - c_ref);
+        for (unsigned int i = 0; i < dim; i++)
+          {
+            transformation_strain[i][i] = -eigenstrain;
+          }
+        VectorGrad stress;
+        Mechanics::compute_stress<dim, ScalarValue>(stiffness,
+                                                    ux - transformation_strain,
+                                                    stress);
+        ScalarValue mech_energy =
+          0.5 * dealii::scalar_product(stress, (ux - transformation_strain)) *
+          (1.0e-9); // Conversion to J/vol in terms of microns
+        variable_list.set_value_term(6, psi * mech_energy);
       }
   }
 
@@ -184,16 +202,6 @@ private:
   {
     if (solve_block_id == 0) // mechanics - lhs
       {
-        /*
-          if (sim_timer.get_increment() == 0.0)
-            {
-              VectorGrad stress;
-              variable_list.set_gradient_term(0, stress);
-              variable_list.set_value_term(1, 0.0);
-              return;
-            }
-          */
-
         VectorGrad  ux  = variable_list.template get_symmetric_gradient<Vector, LHS>(0);
         ScalarValue s   = variable_list.template get_value<Scalar, LHS>(1);
         ScalarValue psi = variable_list.template get_value<Scalar, Current>(3);
@@ -202,34 +210,22 @@ private:
         variable_list.set_gradient_term(0, stress);
         variable_list.set_value_term(1, s - dealii::trace(stress) / 3.0);
       }
-    /*
-      {
-        ScalarValue psi       = variable_list.template get_value<ScalarValue>(3);
-        ScalarGrad  psi_x     = variable_list.template get_gradient<ScalarGrad>(3);
-        ScalarValue psi_x_mag = psi_x.norm() + offset;
-
-        ScalarGrad  cx      = variable_list.template get_gradient<Scalar, LHS>(2);
-        ScalarValue c_term1 = diffusivity * cx;
-        ScalarValue c_term2 = (diffusivity * omega * psi_x * sx) / (RT * psi);
-        ScalarValue c_term3 = (diffusivity * psi_x_mag * kc) / psi;
-        variable_list.set_gradient_term(2, c_term1 + c_term2 + c_term3);
-      }
-    */
   }
 
-  number                                                       alpha;
-  number                                                       i_0;
-  number                                                       del_phi;
-  number                                                       offset;
-  number                                                       c0;
-  number                                                       c_ref;
-  number                                                       RT;
-  number                                                       F;
-  number                                                       diffusivity;
-  number                                                       vegard;
-  number                                                       site_vol;
-  number                                                       poisson;
-  number                                                       youngs_modulus;
+  number alpha;
+  number i_0;
+  number del_phi;
+  number offset;
+  number c0;
+  number c_ref;
+  number RT;
+  number F;
+  number diffusivity;
+  number vegard;
+  number site_vol;
+  number mol_vol;
+  // number                                                       poisson;
+  // number                                                       youngs_modulus;
   dealii::Tensor<2, Mechanics::voigt_tensor_size<dim>, number> stiffness;
 };
 
