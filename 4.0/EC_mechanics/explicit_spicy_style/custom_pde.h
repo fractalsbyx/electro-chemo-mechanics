@@ -78,7 +78,7 @@ private:
       {
         scalar_value = domain_parameter;
       }
-  } // redudant, will not be called
+  }
 
   void
   set_dirichlet([[maybe_unused]] const unsigned int       &index,
@@ -128,7 +128,7 @@ private:
 
         for (unsigned int i = 0; i < dim; i++)
           {
-            u_grad[i][i] = -eigenstrain;
+            u_grad[i][i] -= eigenstrain;
           }
         VectorGrad stress;
         Mechanics::compute_stress<dim, ScalarValue>(stiffness, psi * u_grad, stress);
@@ -158,15 +158,18 @@ private:
         // Update fields
         variable_list.set_gradient_term(0, -stress);
         variable_list.set_value_term(1, 0.0);
+        /*
         if (sim_timer.get_increment() == 0)
           {
-            // variable_list.set_value_term(2, c_val - (c0 * psi));
-            variable_list.set_value_term(2, 0.0);
+            variable_list.set_value_term(2, c_val - (c0 * psi));
+            // variable_list.set_value_term(2, 0.0);
           }
         else
           {
             variable_list.set_value_term(2, r_c_val);
           }
+        */
+        variable_list.set_value_term(2, r_c_val);
         variable_list.set_gradient_term(2, r_c_grad);
       }
     else if (solve_block_id == 1) // pp
@@ -253,12 +256,12 @@ private:
 
         ScalarGrad  LHS_cx_term1 = diffusivity * del_c_grad;
         ScalarGrad  LHS_cx_term2 = (diffusivity * site_vol) / (RT) * (s_grad * del_c);
-        ScalarValue eq_change_c  = del_c + dt * (LHS_c_term1 + LHS_c_term2 + LHS_c_term3);
+        ScalarValue eq_change_c  = del_c * dt * (LHS_c_term1 + LHS_c_term2 + LHS_c_term3);
         ScalarGrad  eq_change_cx = dt * (LHS_cx_term1 + LHS_cx_term2);
 
         // Update fields
         variable_list.set_gradient_term(0, stress);
-        variable_list.set_value_term(1, s_val - dealii::trace(stress) / 3.0);
+        variable_list.set_value_term(1, del_s - dealii::trace(stress) / 3.0);
         variable_list.set_value_term(2, eq_change_c);
         variable_list.set_gradient_term(2, eq_change_cx);
       }

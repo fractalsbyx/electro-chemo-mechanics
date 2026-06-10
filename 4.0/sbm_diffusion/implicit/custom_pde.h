@@ -26,6 +26,7 @@ public:
   CustomPDE(const UserInputParameters<dim> &_user_inputs, PhaseFieldTools<dim> &_pf_tools)
     : PDEOperatorBase<dim, degree, number>(_user_inputs, _pf_tools)
     , c0(get_user_inputs().user_constants.get_double("c0"))
+    , offset(get_user_inputs().user_constants.get_double("offset"))
   {}
 
 private:
@@ -38,12 +39,17 @@ private:
   {
     const dealii::Tensor<1, dim> &mesh_size =
       get_user_inputs().spatial_discretization.rectangular_mesh.size;
-    if (index == 0) // redundant
+    dealii::Point<dim> center(mesh_size / 2.0);
+    double             rad  = 10.0;
+    double             sdf  = ((point - center).norm_square() - rad * rad) / (2.0 * rad);
+    double domain_parameter = 0.5 * ((1.0 + offset) - (1.0 - offset) * std::tanh(sdf));
+    if (index == 0) // c
       {
-        dealii::Point<dim> center(mesh_size / 2.0);
-        double             rad = 5.0;
-        double             sdf = (rad * rad - (point - center).norm_square()) / 2.0 * rad;
-        scalar_value           = 0.5 * (1.0 + std::tanh(sdf));
+        scalar_value = c0 * domain_parameter;
+      }
+    if (index == 1) // psi
+      {
+        scalar_value = domain_parameter;
       }
   }
 
@@ -55,24 +61,31 @@ private:
   {
     if (solve_block_id == 0) // c
       {
-        /*
         ScalarValue c  = variable_list.template get_value<Scalar, Current>(0);
         ScalarGrad  cx = variable_list.template get_gradient<Scalar, Current>(0);
 
         ScalarValue c_old = variable_list.template get_value<Scalar, OldOne>(0);
 
-        ScalarValue r_c  = c - c_old;
-        VectorValue r_cx = -1.0 * cx * sim_timer.get_timestep();
+        ScalarValue psi       = variable_list.template get_value<Scalar, Current>(1);
+        ScalarGrad  psix      = variable_list.template get_gradient<Scalar, Current>(1);
+        ScalarValue psi_x_mag = psix.norm() + offset;
+
+        ScalarValue dt = sim_timer.get_timestep();
+
+        ScalarValue c_term_1 = 0.1 * (psix * cx) / psi; // diff = 0.1
+        ScalarValue c_term_2 =
+          -(psi_x_mag / psi) * 0.1 * (0.1 * (c - 0.1)); // kc = 0.1, c_ref = 0.1
+        ScalarGrad cx_term = -0.1 * cx;                 // diff = 0.1
+
+        ScalarValue r_c  = c_old - c + dt * (c_term_1 + c_term_2);
+        VectorValue r_cx = dt * cx_term;
 
         variable_list.set_value_term(0, r_c);
         variable_list.set_gradient_term(0, r_cx);
-        */
-        ScalarValue c_old = variable_list.template get_value<Scalar, OldOne>(0);
-        variable_list.set_value_term(0, c_old);
       }
     else if (solve_block_id == 1) // pp
       {
-        variable_list.set_value_term(1, 0.0);
+        variable_list.set_value_term(2, 0.0);
       }
   }
 
@@ -88,15 +101,24 @@ private:
         ScalarValue delta_c_val  = variable_list.template get_value<Scalar, LHS>(0);
         ScalarGrad  delta_c_grad = variable_list.template get_gradient<Scalar, LHS>(0);
 
-        variable_list.set_value_term(0, delta_c_val);
-        variable_list.set_gradient_term(0, 1.0 * dt * delta_c_grad);
+        ScalarValue psi       = variable_list.template get_value<Scalar, Current>(1);
+        ScalarGrad  psix      = variable_list.template get_gradient<Scalar, Current>(1);
+        ScalarValue psi_x_mag = psix.norm() + offset;
+
+        ScalarValue LHS_c_term_1 = 0.1 * (psix * delta_c_grad) / psi; // diff = 0.1
+        ScalarValue LHS_c_term_2 = -(psi_x_mag / psi) * 0.1 * (delta_c_val);
+        ScalarGrad  LHS_cx_term  = 0.1 * delta_c_grad; // diff = 0.1
+
+        ScalarValue change_c  = delta_c_val * (1.0 + dt * (LHS_c_term_1 + LHS_c_term_2));
+        ScalarGrad  change_cx = dt * LHS_cx_term;
+
+        variable_list.set_value_term(0, change_c);
+        variable_list.set_gradient_term(0, change_cx);
       }
   }
 
-  int                                            ic_type;
-  number                                         c0;
-  number                                         icamplitude;
-  mutable std::uniform_real_distribution<number> dist;
+  number c0;
+  number offset;
 };
 
 PRISMS_PF_END_NAMESPACE

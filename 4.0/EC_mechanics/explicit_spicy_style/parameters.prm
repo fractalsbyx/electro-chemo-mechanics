@@ -32,7 +32,7 @@ subsection linear solver parameters: 0
   set solver type              = bicgstab
   set max iterations           = 10000
   set tolerance type           = RMSEPerField
-  set tolerance value          = 1e-6
+  set tolerance value          = 1.0e-6
   set preconditioner           = Chebyshev
 
   subsection Chebyshev
@@ -41,6 +41,14 @@ subsection linear solver parameters: 0
     set smoothing range          = 0.0001
   end
 end
+
+subsection newton solver parameters: 0
+  set solver_ids               = 0
+  set max iterations           = 100
+  set step size                = 1.0
+  set tolerance value          = 1.0e-6
+end
+
 
 # Model Constants (for reference check calculation tab in NMC parameters google sheet)
 
@@ -51,7 +59,7 @@ set Model constant c0 = 1.0, DOUBLE
 set Model constant c_ref = 0.4, DOUBLE
 set Model constant diffusivity = 0.1, DOUBLE
 
-set Model constant i_0 = 00.0, DOUBLE
+set Model constant i_0 = 1.0, DOUBLE
 set Model constant del_phi = 0.00, DOUBLE
 set Model constant alpha = 0.5, DOUBLE
 

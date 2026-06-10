@@ -5,17 +5,28 @@ subsection Rectangular mesh
 end
 
 set global refinement = 7
+set max refinement = 7
+set min refinement = 1
+set mesh adaptivity = true
 
-set time step = 2.0e-4
+subsection refinement criterion: 0
+  set variables         = psi
+  set type              = value
+  set value lower bound = 1e-3
+  set value upper bound = 2
+end
+
+set time step = 1.0
 set number steps = 100000
 
 subsection output
   set condition = EQUAL_SPACING
-  set number = 50
+  set number = 100
   set file type = vtu
 end
 
-set Model constant c0 = 0.50, DOUBLE
+set Model constant c0 = 1.0, DOUBLE
+set Model constant offset = 1e-2, DOUBLE
 
 subsection linear solver parameters: 0
   set solver_ids               = 0
@@ -23,11 +34,18 @@ subsection linear solver parameters: 0
   set max iterations           = 10000
   set tolerance type           = RMSEPerField
   set tolerance value          = 1.0e-6
+  set preconditioner           = Chebyshev
+
+  subsection Chebyshev
+    set eigenvalue cg iterations = 10
+    set smoother degree = 5
+    set smoothing range = 0.0001
+  end
 end 
 
-#subsection newton solver parameters: 0
-#  set solver_ids               = 0
-#  set max iterations           = 100
-#  set step size                = 1.0
-#  set tolerance value          = 1.0e-6
-#end
+subsection newton solver parameters: 0
+  set solver_ids               = 0
+  set max iterations           = 100
+  set step size                = 1.0
+  set tolerance value          = 1.0e-6
+end
