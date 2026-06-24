@@ -7,7 +7,7 @@ end
 set global refinement = 7
 set max refinement = 7
 set min refinement = 1
-set mesh adaptivity = true
+set mesh adaptivity = false
 
 subsection refinement criterion: 0
   set variables         = psi
@@ -27,13 +27,31 @@ subsection output
 end
 
 subsection linear solver parameters: 0
-  set solver_ids               = 0, 1
+  set solver_ids               = 0
+
+  set solver type              = bicgstab
+  set max iterations           = 10000
+  set tolerance type           = RMSEPerField
+  set tolerance value          = 1.0e-6
+  set preconditioner           = GMG
+  set mg depth                 = 3
+
+  subsection Chebyshev
+    set eigenvalue cg iterations = 10
+    set smoother degree          = 5
+    set smoothing range          = 0.0001
+  end
+end
+
+subsection linear solver parameters: 1
+  set solver_ids               = 1
 
   set solver type              = bicgstab
   set max iterations           = 10000
   set tolerance type           = RMSEPerField
   set tolerance value          = 1.0e-6
   set preconditioner           = Chebyshev
+  set mg depth                 = 3
 
   subsection Chebyshev
     set eigenvalue cg iterations = 10

@@ -257,9 +257,9 @@ private:
 
         ScalarValue j_c_c_val = -del_c;
         ScalarValue j_c_mu_val =
-          -dt * (1.0 / psi) *
-          (mobility * psi_grad * del_mu_grad - psi_grad_mag * react_d_mu);
-        ScalarGrad j_c_mu_grad = -dt * mobility * del_mu_grad;
+          dt * (1.0 / psi) *
+          (mobility * psi_grad * del_mu_grad + psi_grad_mag * react_d_mu);
+        ScalarGrad j_c_mu_grad = dt * mobility * del_mu_grad;
         // ScalarValue j_c_u_val   = 0.0;
 
         ScalarValue j_mu_c_val  = RT / c_val * del_c - site_vol * vegard * s_del_c;
