@@ -50,7 +50,7 @@ subsection linear solver parameters: 1
   set max iterations           = 10000
   set tolerance type           = RMSEPerField
   set tolerance value          = 1.0e-6
-  set preconditioner           = Chebyshev
+  set preconditioner           = GMG
   set mg depth                 = 3
 
   subsection Chebyshev

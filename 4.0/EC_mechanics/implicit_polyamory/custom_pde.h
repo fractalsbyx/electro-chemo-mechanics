@@ -56,10 +56,6 @@ private:
     double             rad  = 10.0;
     double             sdf  = ((point - center).norm_square() - rad * rad) / (2.0 * rad);
     double domain_parameter = 0.5 * ((1.0 + offset) - (1.0 - offset) * std::tanh(sdf));
-    // if (index == 1)
-    //   {
-    //     scalar_value = RT * std::log(c0 * domain_parameter); // TODO needs checking
-    //   }
     if (index == 2) // c
       {
         scalar_value = c0 * domain_parameter;
